@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+x=`wc -l $1`
+
+echo "liczba linii $x" > temp1
+
+sed 's/$x//g' temp1 > temp2
+
+cat temp2
+

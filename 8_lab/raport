@@ -1,0 +1,27 @@
+Zad 1 
+
+Informacje wyswietlane przez kolejno tworzone watki nie sa w kolejnosci i zmieniaja sie miedzy roznymi wywolaniami programu. 
+
+Zad 2
+
+Kolejnosc wyswietlania watkow nie jest zawsze taka sama. Jest to zwiazane z losowym przypisywaniem czasu procesora roznym watkom.
+
+Zad 3
+
+By program dzialal poprawnie zastapione zostalo przekazywanie argumentu przez referencje do funkcji  printHello na rzecz przekazywania przez wartosc oraz jawne rzutowanie na wskaznik, na jawne rzutowanie na long.
+
+W obu przypadkach należy zrzutować argument na wskaźnik na void. W przypadku przekazywania jednego argumentu podajemy jego wartość, w przypadku klku argumentów tworzymy strukturę i podajemy referencję do obiektu jej instancji jako argument.
+
+Zad 4
+
+W programie brakowalo funkcji pthread_exit().
+
+Zad 5
+
+W programie join.c uzyto funkcji pthread_join, dzieki ktorej program głowny moze oczekiwac na zakonczenie sie watkow, ktore stworzyl, a zatem main czeka na swoje watki.
+
+W przypadku watkow odlaczonych uzyskanych za pomoca funkcji pthread_detach watek rodzic nie czeka na potomkow, przez co main nie czeka na watki.
+
+Zad 6
+
+W pierwszym przypadku nie wystepuje przekazanie atrybutu do funkcji, dzieki ktorym za pomo funkcji setstacksize ustawiany jest odpowiedni rozmiar stosu.

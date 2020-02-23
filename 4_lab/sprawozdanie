@@ -1,0 +1,414 @@
+1)
+Sprawdzono -> program wyświetla się w czołówce programów wykorzystujących cykle obliczeniowe komputera.
+
+ PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 49406 jpietrus  20   0    4160    648    584 R 100.0  0.0   0:41.54 a.out
+ 28484 mjaciube  20   0    4028    680    616 R  99.7  0.0   9:17.79 a.out
+Przy pętli bez sleepa mamy 100% wykorzystania procesora.
+Gdy użyjemy sleepa programu nie widać w topie.
+
+Wyniki są zadowalające, wszystkie reakcje przebiegają prawidłowo, tak ja zostały opisane w treści zadania.
+
+2)Za pomocą polecenia cat /proc/numerPID/status wywołano tablicę akcji.
+
+SigBlk:	0000000000000000 sygnały blokowane
+SigIgn:	0000000000000800 sygnały zignorowane
+SigCgt:	0000000000006200 sygnały przechwycone
+
+Po przeliczeniu z systemu heksadecymalnego:
+
+SigBlk:	000000000000
+SigIgn: 100000000000  sygnał 12
+SigCgt:	110001000000000 sygnał 10, 14, 15
+
+Napisano potok 3 poleceń w którym pierwszy wypisuje na tekst na ekranie co 1s
+Treść skryptu potok.sh:
+./petla.sh | cat | cat
+
+F S   UID   PID  PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+0 S 15214 16429  8835  0  80   0 -  3174 -      pts/13   00:00:00 potok.sh
+0 S 15214 16430 16429  0  80   0 -  3176 -      pts/13   00:00:00 petla.sh
+0 S 15214 16431 16429  0  80   0 -  1871 -      pts/13   00:00:00 cat
+0 S 15214 16432 16429  0  80   0 -  1871 -      pts/13   00:00:00 cat
+
+
+Dla potok.sh:
+
+ls -l /proc/16429/fd
+total 0
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:39 0 -> /dev/pts/13
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:39 1 -> /dev/pts/13
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:39 2 -> /dev/pts/13
+lr-x------ 1 jpietrus ar2017 64 gru  6 15:39 255 -> /home/jpietrus/SCR/4_lab_10.11.2019/potok.sh
+
+Dla petla.sh:
+
+ls -l /proc/16430/fd
+total 0
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:41 0 -> /dev/pts/13
+l-wx------ 1 jpietrus ar2017 64 gru  6 15:41 1 -> pipe:[49284381]
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:41 2 -> /dev/pts/13
+lr-x------ 1 jpietrus ar2017 64 gru  6 15:41 255 -> /home/jpietrus/SCR/4_lab_10.11.2019/petla.sh
+
+Dla cat:
+
+ ls -l /proc/16431/fd
+total 0
+lr-x------ 1 jpietrus ar2017 64 gru  6 15:42 0 -> pipe:[49284381]
+l-wx------ 1 jpietrus ar2017 64 gru  6 15:42 1 -> pipe:[49284382]
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:42 2 -> /dev/pts/13
+jpietrus@panamint:~/SCR/4_lab_10.11.2019$ 
+
+Dla drugiego wywołania cat:
+ls -l /proc/16432/fd
+total 0
+lr-x------ 1 jpietrus ar2017 64 gru  6 15:42 0 -> pipe:[49284382]
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:42 1 -> /dev/pts/13
+lrwx------ 1 jpietrus ar2017 64 gru  6 15:42 2 -> /dev/pts/13
+
+Obserwując wyniki możemy sprawdzić przekazywanie wejścia na wyjście między potokami.
+
+
+
+
+2) Przetestowano polecenie strace. Działanie polecenia przeprowadzono na prostym programie napisanym w języku C wypisującym na ekran klasyczne Hello World.
+
+Kod programu:
+
+int main()
+{
+
+  printf("Hello World!\n");
+
+  return 0;
+ }
+ 
+strace ./a.out
+
+execve("./a.out", ["./a.out"], [/* 32 vars */]) = 0
+brk(NULL)                               = 0x55c492616000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=98084, ...}) = 0
+mmap(NULL, 98084, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f8ab58e3000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\4\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1689360, ...}) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f8ab58fc000
+mmap(NULL, 3795296, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f8ab533b000
+mprotect(0x7f8ab54d0000, 2097152, PROT_NONE) = 0
+mmap(0x7f8ab56d0000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x195000) = 0x7f8ab56d0000
+mmap(0x7f8ab56d6000, 14688, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f8ab56d6000
+close(3)                                = 0
+arch_prctl(ARCH_SET_FS, 0x7f8ab58fd440) = 0
+mprotect(0x7f8ab56d0000, 16384, PROT_READ) = 0
+mprotect(0x55c490791000, 4096, PROT_READ) = 0
+mprotect(0x7f8ab58fe000, 4096, PROT_READ) = 0
+munmap(0x7f8ab58e3000, 98084)           = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 14), ...}) = 0
+brk(NULL)                               = 0x55c492616000
+brk(0x55c492637000)                     = 0x55c492637000
+write(1, "Hello World!\n", 13Hello World!
+)          = 13
+exit_group(0)                           = ?
++++ exited with 0 +++
+
+Analiza:
+Funkcja excave powoduje otworzenie pliku a.out. Kolejne pogrubione linie to funkcje otwierania i czytania z pliku. Funkcja open() zwróciła numer deskryptora pliku (3), a druga read() przeczytała z tego deskryptora 832 bajty. Ostatnia pogrubiona linijka, to linijka z funkcją write, ktora wypisuje Hello world na standardowe wyjście, czyli 1 deskryptora.
+--------------------------------------------------------------------------------------------------
+b)Pliki które powłoka bash próbuje odczytać przy starcie
+strace -t open bash
+17:32:24 execve("/bin/open", ["open", "bash"], [/* 32 vars */]) = 0
+17:32:24 brk(NULL)                      = 0x55f8b2555000
+17:32:24 access("/etc/ld.so.nohwcap", F_OK) = -1 ENOENT (No such file or directory)
+17:32:24 access("/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+17:32:24 open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+17:32:24 fstat(3, {st_mode=S_IFREG|0644, st_size=98084, ...}) = 0
+17:32:24 mmap(NULL, 98084, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f2aaf9c3000
+17:32:24 close(3)                       = 0
+17:32:24 access("/etc/ld.so.nohwcap", F_OK) = -1 ENOENT (No such file or directory)
+17:32:24 open("/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+17:32:24 read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\4\2\0\0\0\0\0"..., 832) = 832
+17:32:24 fstat(3, {st_mode=S_IFREG|0755, st_size=1689360, ...}) = 0
+17:32:24 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2aaf9e6000
+17:32:24 mmap(NULL, 3795296, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2aaf41b000
+17:32:24 mprotect(0x7f2aaf5b0000, 2097152, PROT_NONE) = 0
+17:32:24 mmap(0x7f2aaf7b0000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x195000) = 0x7f2aaf7b0000
+17:32:24 mmap(0x7f2aaf7b6000, 14688, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2aaf7b6000
+17:32:24 close(3)                       = 0
+17:32:24 arch_prctl(ARCH_SET_FS, 0x7f2aaf9e7440) = 0
+17:32:24 mprotect(0x7f2aaf7b0000, 16384, PROT_READ) = 0
+17:32:24 mprotect(0x55f8b094a000, 4096, PROT_READ) = 0
+17:32:24 mprotect(0x7f2aaf9de000, 4096, PROT_READ) = 0
+17:32:24 munmap(0x7f2aaf9c3000, 98084)  = 0
+17:32:24 brk(NULL)                      = 0x55f8b2555000
+17:32:24 brk(0x55f8b2576000)            = 0x55f8b2576000
+17:32:24 open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+17:32:24 fstat(3, {st_mode=S_IFREG|0644, st_size=3233712, ...}) = 0
+17:32:24 mmap(NULL, 3233712, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f2aaf103000
+17:32:24 close(3)                       = 0
+17:32:24 fstat(0, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 14), ...}) = 0
+17:32:24 fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 14), ...}) = 0
+17:32:24 fstat(2, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 14), ...}) = 0
+17:32:24 open("/proc/self/fd/0", O_RDWR) = 3
+17:32:24 ioctl(3, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+17:32:24 ioctl(3, KDGKBTYPE, 0x7fff7dafffd7) = -1 ENOTTY (Inappropriate ioctl for device)
+17:32:24 close(3)                       = 0
+17:32:24 open("/dev/tty", O_RDWR)       = 3
+17:32:24 ioctl(3, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+17:32:24 ioctl(3, KDGKBTYPE, 0x7fff7dafffd7) = -1 ENOTTY (Inappropriate ioctl for device)
+17:32:24 close(3)                       = 0
+17:32:24 open("/dev/tty0", O_RDWR)      = -1 EACCES (Permission denied)
+17:32:24 open("/dev/tty0", O_WRONLY)    = -1 EACCES (Permission denied)
+17:32:24 open("/dev/tty0", O_RDONLY)    = -1 EACCES (Permission denied)
+17:32:24 open("/dev/vc/0", O_RDWR)      = -1 ENOENT (No such file or directory)
+17:32:24 open("/dev/vc/0", O_WRONLY)    = -1 ENOENT (No such file or directory)
+17:32:24 open("/dev/vc/0", O_RDONLY)    = -1 ENOENT (No such file or directory)
+17:32:24 open("/dev/systty", O_RDWR)    = -1 ENOENT (No such file or directory)
+17:32:24 open("/dev/systty", O_WRONLY)  = -1 ENOENT (No such file or directory)
+17:32:24 open("/dev/systty", O_RDONLY)  = -1 ENOENT (No such file or directory)
+17:32:24 open("/dev/console", O_RDWR)   = -1 EACCES (Permission denied)
+17:32:24 open("/dev/console", O_WRONLY) = -1 EACCES (Permission denied)
+17:32:24 open("/dev/console", O_RDONLY) = -1 EACCES (Permission denied)
+17:32:24 ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+17:32:24 ioctl(0, KDGKBTYPE, 0x7fff7dafffd7) = -1 ENOTTY (Inappropriate ioctl for device)
+17:32:24 ioctl(1, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+17:32:24 ioctl(1, KDGKBTYPE, 0x7fff7dafffd7) = -1 ENOTTY (Inappropriate ioctl for device)
+17:32:24 ioctl(2, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+17:32:24 ioctl(2, KDGKBTYPE, 0x7fff7dafffd7) = -1 ENOTTY (Inappropriate ioctl for device)
+17:32:24 open("/usr/share/locale/locale.alias", O_RDONLY|O_CLOEXEC) = 3
+17:32:24 fstat(3, {st_mode=S_IFREG|0644, st_size=2995, ...}) = 0
+17:32:24 read(3, "# Locale name alias data base.\n#"..., 4096) = 2995
+17:32:24 read(3, "", 4096)              = 0
+17:32:24 close(3)                       = 0
+17:32:24 open("/usr/share/locale/en_US/LC_MESSAGES/kbd.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+17:32:24 open("/usr/share/locale/en/LC_MESSAGES/kbd.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+17:32:24 write(2, "Couldn't get a file descriptor r"..., 56Couldn't get a file descriptor referring to the console
+) = 56
+17:32:24 exit_group(1)                  = ?
+17:32:24 +++ exited with 1 +++
+
+c)
+
+strace -e trace=write ls
+
+
+write(1, "a.out\t  helloworld.c\tpetla.sh  s"..., 57a.out	  helloworld.c	petla.sh  skrypt1.sh	#sprawozdanie#
+) = 57
+write(1, "find.out  main.c\tpotok.sh  spraw"..., 40find.out  main.c	potok.sh  sprawozdanie
+) = 40
++++ exited with 0 +++
+
+Ls wywołuje jedną funkcję pintf na jedną linię plików, czyli w tym przypadku dwa razy.
+
+
+4)
+strace -p 27854
+
+strace: Process 27854 attached
+read(0, "t", 1)                         = 1
+poll([{fd=0, events=POLLIN}], 1, 0)     = 0 (Timeout)
+ioctl(0, TIOCLINUX, 0x7ffd8aad58e4)     = -1 ENOTTY (Inappropriate ioctl for device)
+rt_sigaction(SIGTSTP, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7f7b64276060}, {sa_handler=0x560aa426cb40, sa_mask=~[KILL STOP RTMIN RT_1], sa_flags=SA_RESTORER, sa_restorer=0x7f7b64276060}, 8) = 0
+poll([{fd=0, events=POLLIN}], 1, 0)     = 0 (Timeout)
+poll([{fd=0, events=POLLIN}], 1, 0)     = 0 (Timeout)
+write(1, "t", 1)                        = 1
+rt_sigaction(SIGTSTP, {sa_handler=0x560aa426cb40, sa_mask=~[KILL STOP RTMIN RT_1], sa_flags=SA_RESTORER, sa_restorer=0x7f7b64276060}, NULL, 8) = 0
+read(0, "e", 1)                         = 1
+poll([{fd=0, events=POLLIN}], 1, 0)     = 0 (Timeout)
+ioctl(0, TIOCLINUX, 0x7ffd8aad58e4)     = -1 ENOTTY (Inappropriate ioctl for device)
+rt_sigaction(SIGTSTP, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7f7b64276060}, {sa_handler=0x560aa426cb40, sa_mask=~[KILL STOP RTMIN RT_1], sa_flags=SA_RESTORER, sa_restorer=0x7f7b64276060}, 8) = 0
+poll([{fd=0, events=POLLIN}], 1, 0)     = 0 (Timeout)
+poll([{fd=0, events=POLLIN}], 1, 0)     = 0 (Timeout)
+write(1, "e", 1)                        = 1
+rt_sOCaction(SIGTSTP, {sa_handler=0x560aa426cb40, sa_mask=~[KILL STOP RTMIN RT_1], sa_flags=SA_RESTORER, sa_restorer=0x7f7b64276060}, NULL, 8) = 0
+
+Edytor zczytuje tekst a następnie zamyka plik co wnioskuję po wysłaniu do niego sygnału SIGSTP.
+
+
+POLECENIE TRUSS:
+
+1)truss ./a.out
+2)truss -t open bash
+3)truss -t write ls
+truss -t open notatka
+
+
+1)truss ./a.out
+execve("a.out", 0xFFBFFD1C, 0xFFBFFD24)  argc = 1
+sysinfo(SI_MACHINE, "sun4u", 257)               = 6
+mmap(0x00000000, 32, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF3E0000
+mmap(0x00000000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF390000
+mmap(0x00000000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF380000
+memcntl(0xFF3A0000, 17900, MC_ADVISE, MADV_WILLNEED, 0, 0) = 0
+mmap(0x00000000, 8192, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF370000
+memcntl(0x00010000, 1868, MC_ADVISE, MADV_WILLNEED, 0, 0) = 0
+resolvepath("/usr/lib/ld.so.1", "/lib/ld.so.1", 1023) = 12
+getcwd("/home/jpietrus/SCR/4_lab_10.11.2019", 1017) = 0
+resolvepath("/home/jpietrus/SCR/4_lab_10.11.2019/a.out", "/home/jpietrus/SCR/4_lab_10.11.2019/a.out", 1023) = 41
+stat64("/home/jpietrus/SCR/4_lab_10.11.2019/a.out", 0xFFBFF7E0) = 0
+open("/var/ld/ld.config", O_RDONLY)             = 3
+fstat64(3, 0xFFBFF350)                          = 0
+mmap(0x00000000, 148, PROT_READ, MAP_SHARED, 3, 0) = 0xFF360000
+close(3)                                        = 0
+stat64("/opt/csw/lib/libc.so.1", 0xFFBFEF40)    Err#2 ENOENT
+stat64("/lib/libc.so.1", 0xFFBFEF40)            = 0
+resolvepath("/lib/libc.so.1", "/lib/libc.so.1", 1023) = 14
+open("/lib/libc.so.1", O_RDONLY)                = 3
+mmap(0x00010000, 32768, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_ALIGN, 3, 0) = 0xFF350000
+mmap(0x00010000, 1368064, PROT_NONE, MAP_PRIVATE|MAP_NORESERVE|MAP_ANON|MAP_ALIGN, -1, 0) = 0xFF200000
+mmap(0xFF200000, 1247157, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_TEXT, 3, 0) = 0xFF200000
+mmap(0xFF342000, 35965, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_INITDATA, 3, 1253376) = 0xFF342000
+mmap(0xFF34C000, 1616, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANON, -1, 0) = 0xFF34C000
+munmap(0xFF332000, 65536)                       = 0
+munmap(0xFF350000, 32768)                       = 0
+close(3)                                        = 0
+memcntl(0xFF200000, 146148, MC_ADVISE, MADV_WILLNEED, 0, 0) = 0
+mmap(0x00010000, 24576, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANON|MAP_ALIGN, -1, 0) = 0xFF350000
+getcontext(0xFFBFF650)
+getrlimit(RLIMIT_STACK, 0xFFBFF630)             = 0
+getpid()                                        = 17630 [17629]
+setustack(0xFF352A88)
+ioctl(1, TCGETA, 0xFFBFFA8C)                    = 0
+fstat64(1, 0xFFBFF9A8)                          = 0
+stat64("/platform/SUNW,Sun-Fire-880/lib/libc_psr.so.1", 0xFFBFEFE8) = 0
+resolvepath("/platform/SUNW,Sun-Fire-880/lib/libc_psr.so.1", "/platform/sun4u-us3/lib/libc_psr.so.1", 1023) = 37
+open("/platform/SUNW,Sun-Fire-880/lib/libc_psr.so.1", O_RDONLY) = 3
+mmap(0x00010000, 6600, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_ALIGN, 3, 0) = 0xFF1F0000
+munmap(0xFF1F2000, 4294965704)                  Err#22 EINVAL
+close(3)                                        = 0
+Hello World!
+write(1, " H e l l o   W o r l d !".., 13)      = 13
+_exit(0)
+diablo-bash-3.2$ clear
+diablo-bash-3.2$ truss ./a.out
+execve("a.out", 0xFFBFFD1C, 0xFFBFFD24)  argc = 1
+sysinfo(SI_MACHINE, "sun4u", 257)               = 6
+mmap(0x00000000, 32, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF3E0000
+mmap(0x00000000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF390000
+mmap(0x00000000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF380000
+memcntl(0xFF3A0000, 17900, MC_ADVISE, MADV_WILLNEED, 0, 0) = 0
+mmap(0x00000000, 8192, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANON, -1, 0) = 0xFF370000
+memcntl(0x00010000, 1868, MC_ADVISE, MADV_WILLNEED, 0, 0) = 0
+resolvepath("/usr/lib/ld.so.1", "/lib/ld.so.1", 1023) = 12
+getcwd("/home/jpietrus/SCR/4_lab_10.11.2019", 1017) = 0
+resolvepath("/home/jpietrus/SCR/4_lab_10.11.2019/a.out", "/home/jpietrus/SCR/4_lab_10.11.2019/a.out", 1023) = 41
+stat64("/home/jpietrus/SCR/4_lab_10.11.2019/a.out", 0xFFBFF7E0) = 0
+open("/var/ld/ld.config", O_RDONLY)             = 3
+fstat64(3, 0xFFBFF350)                          = 0
+mmap(0x00000000, 148, PROT_READ, MAP_SHARED, 3, 0) = 0xFF360000
+close(3)                                        = 0
+stat64("/opt/csw/lib/libc.so.1", 0xFFBFEF40)    Err#2 ENOENT
+stat64("/lib/libc.so.1", 0xFFBFEF40)            = 0
+resolvepath("/lib/libc.so.1", "/lib/libc.so.1", 1023) = 14
+open("/lib/libc.so.1", O_RDONLY)                = 3
+mmap(0x00010000, 32768, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_ALIGN, 3, 0) = 0xFF350000
+mmap(0x00010000, 1368064, PROT_NONE, MAP_PRIVATE|MAP_NORESERVE|MAP_ANON|MAP_ALIGN, -1, 0) = 0xFF200000
+mmap(0xFF200000, 1247157, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_TEXT, 3, 0) = 0xFF200000
+mmap(0xFF342000, 35965, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_INITDATA, 3, 1253376) = 0xFF342000
+mmap(0xFF34C000, 1616, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANON, -1, 0) = 0xFF34C000
+munmap(0xFF332000, 65536)                       = 0
+munmap(0xFF350000, 32768)                       = 0
+close(3)                                        = 0
+memcntl(0xFF200000, 146148, MC_ADVISE, MADV_WILLNEED, 0, 0) = 0
+mmap(0x00010000, 24576, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANON|MAP_ALIGN, -1, 0) = 0xFF350000
+getcontext(0xFFBFF650)
+getrlimit(RLIMIT_STACK, 0xFFBFF630)             = 0
+getpid()                                        = 17739 [17738]
+setustack(0xFF352A88)
+ioctl(1, TCGETA, 0xFFBFFA8C)                    = 0
+fstat64(1, 0xFFBFF9A8)                          = 0
+stat64("/platform/SUNW,Sun-Fire-880/lib/libc_psr.so.1", 0xFFBFEFE8) = 0
+resolvepath("/platform/SUNW,Sun-Fire-880/lib/libc_psr.so.1", "/platform/sun4u-us3/lib/libc_psr.so.1", 1023) = 37
+open("/platform/SUNW,Sun-Fire-880/lib/libc_psr.so.1", O_RDONLY) = 3
+mmap(0x00010000, 6600, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_ALIGN, 3, 0) = 0xFF1F0000
+munmap(0xFF1F2000, 4294965704)                  Err#22 EINVAL
+close(3)                                        = 0
+Hello World!
+write(1, " H e l l o   W o r l d !".., 13)      = 13
+_exit(0)
+----------------------------------------------------------
+---------------------------------------------------------
+2) truss -t open bash
+open("/var/ld/ld.config", O_RDONLY)             = 3
+open("/lib/libc.so.1", O_RDONLY)                = 3
+open64("/dev/tty", O_RDWR|O_NONBLOCK)           = 3
+open("/opt/csw/lib/sparcv9/libintl.so.8", O_RDONLY) = 3
+open("/opt/csw/lib/sparcv8/libintl.so.8", O_RDONLY) = 3
+open("/opt/csw/lib/sparcv9/libiconv.so.2", O_RDONLY) = 3
+open("/opt/csw/lib/sparcv8/libiconv.so.2", O_RDONLY) = 3
+open("/platform/SUNW,Sun-Fire-880/lib/libc_psr.so.1", O_RDONLY) = 3
+open("/lib/libnsl.so.1", O_RDONLY)              = 3
+open64("/var/run/name_service_door", O_RDONLY)  = 3
+open64("/etc/bash.bashrc", O_RDONLY)            Err#2 ENOENT
+open64("/home/jpietrus/.bashrc", O_RDONLY)      = 4
+czesc kociaku
+open64("/home/jpietrus/.bash_history", O_RDONLY) = 4
+open64("/home/jpietrus/.bash_history", O_RDONLY) = 4
+open("/lib/libcurses.so.1", O_RDONLY)           = 4
+open("/usr/share/lib/terminfo//x/xterms", O_RDONLY) = 4
+
+Lokazlizacja plikow konfiguracyjnych otwieranych przy otwieraniu basha wystepuja jako parametr funkcji open.
+-----------------------------------------------------------
+----------------------------------------------------------
+3)
+truss -t write ls
+#sprawozdanie#  main.c          skrypt1.sh
+write(1, " # s p r a w o z d a n i".., 43)      = 43
+a.out           petla.sh        sprawozdanie
+write(1, " a . o u t              ".., 45)      = 45
+find.out        plik_tekstowy   sprawozdanie~
+write(1, " f i n d . o u t        ".., 46)      = 46
+helloworld.c    potok.sh
+write(1, " h e l l o w o r l d . c".., 25)      = 25
+
+przy kazdej nowej lini wyswietlanej przy poleceniu ls wystepuje funkcja printf, czyli w tym przypadku wystapi ona 4 razy.
+
+------------------------------------------------------------
+------------------------------------------------------------
+4) sprawdzam edycje pliku przez program nano
+truss -p 20453
+read(0, 0xFFBFF887, 1)          (sleeping...)
+read(0, " h", 1)                                = 1
+lwp_sigmask(SIG_SETMASK, 0x00080000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+pollsys(0xFFBFF878, 1, 0xFFBFF808, 0x00000000)  = 0
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00080000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+sigaction(SIGTSTP, 0xFFBFF938, 0xFF31F4AC)      = 0
+pollsys(0xFFBFF970, 1, 0xFFBFF908, 0x00000000)  = 0
+pollsys(0xFFBFF970, 1, 0xFFBFF908, 0x00000000)  = 0
+write(1, "1B [ 1 ; 5 1 H1B [ 7 m M".., 28)      = 28
+sigaction(SIGTSTP, 0xFFBFF8D8, 0x00000000)      = 0
+read(0, 0xFFBFF887, 1)          (sleeping...)
+read(0, " e", 1)                                = 1
+lwp_sigmask(SIG_SETMASK, 0x00080000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+pollsys(0xFFBFF878, 1, 0xFFBFF808, 0x00000000)  = 0
+brk(0x00095C98)                                 = 0
+brk(0x00097C98)                                 = 0
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00080000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+sigaction(SIGTSTP, 0xFFBFF938, 0xFF31F4AC)      = 0
+pollsys(0xFFBFF970, 1, 0xFFBFF908, 0x00000000)  = 0
+pollsys(0xFFBFF970, 1, 0xFFBFF908, 0x00000000)  = 0
+write(1, " e", 1)                               = 1
+sigaction(SIGTSTP, 0xFFBFF8D8, 0x00000000)      = 0
+read(0, " j", 1)                                = 1
+lwp_sigmask(SIG_SETMASK, 0x00080000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+pollsys(0xFFBFF878, 1, 0xFFBFF808, 0x00000000)  = 0
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00080000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+lwp_sigmask(SIG_SETMASK, 0x00000000, 0x00000000) = 0xFFBFFEFF [0x0000FFFF]
+sigaction(SIGTSTP, 0xFFBFF938, 0xFF31F4AC)      = 0
+pollsys(0xFFBFF970, 1, 0xFFBFF908, 0x00000000)  = 0
+pollsys(0xFFBFF970, 1, 0xFFBFF908, 0x00000000)  = 0
+write(1, " j", 1)                               = 1
+sigaction(SIGTSTP, 0xFFBFF8D8, 0x00000000)      = 0
+read(0, 0xFFBFF887, 1)          (sleeping...)

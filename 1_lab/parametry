@@ -1,0 +1,62 @@
+#!/bin/bash
+
+#czyszczenie ekranu
+clear
+
+#wartości domyślne
+rozszerzenie_default=sh
+days_default=0;
+nazwa_default=ziomek
+
+
+#export rozszerzenie=$rozszerzenie_default
+#export days=$days_default
+#export nazwa=$nazwa_default
+
+
+while getopts ":n:m:a:" opcja;
+do
+    case ${opcja} in
+	n ) days="$OPTARG"
+	;;
+	m ) rozszerzenie="$OPTARG"
+	;;
+	a ) nazwa="$OPTARG"
+        ;;
+	: ) echo Nie podano wartości dla wszystkich parametrów, przypisano wartości domyślne
+	;;
+	* ) echo "błędna opcja";
+        ;;	
+    esac
+done
+
+
+shift $(expr $OPTIND - 1)
+
+if [[ -z "$days" ]]
+then
+    echo Podaj jak dawno stworzony był szukany plik
+    read days
+fi
+
+if [[ -z "$rozszerzenie" ]]
+then
+    echo Jakie rozszerzenie ma szukany plik
+    read rozszerzenie
+fi
+
+if [[ -z "$nazwa" ]]
+then
+    echo Podaj nazwę archiwum które ma być stworzone z tych plików
+    read nazwa
+fi
+
+plik=$(find -name "*.$rozszerzenie" -atime "$days")
+
+if [[ $plik > "" ]]
+then
+    tar -cvf "$nazwa" $plik
+     echo Spakowano wyszukane pliki do archiwum o nazwie "$nazwa"
+else
+    echo Nie utworzono archiwum, nie znaleziono takich plików
+fi

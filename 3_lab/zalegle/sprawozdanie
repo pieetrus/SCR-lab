@@ -1,0 +1,47 @@
+Ćwiczenie 4. z potokiem fifo
+
+W sytuacji dwóch zapisów i dwóch odczytów system wyświetla dane chaotycznie.
+W jednym terminalu nie pojawiają się jednocześnie dane z tego samego zapisu.
+Jeżeli dany fragment pojawi się w jednym procesie odczytującym, to nie pojawia się on w drugim. Dane nie są zczytywane w żaden okresowy, ułożony sposób, raz pojawia się 5 linijek w jednym terminalu, następnie 2 linijki w 2 itd.
+
+Przypadek 1) Zabity proces czytający
+Skrypty piszące dalej działają, a jeden działający proces czytający działa poprawnie zczytując dane z obu procesów piszących
+
+Przypadek 2) Oba procesy czytające zabite
+W tej sytuacji procesy piszące również się wyłączja
+
+Przypadek 3) Proces piszący zabity
+W tej sytuacji drugi proces dalej pisze do potoku, a procesy czytające dalej czytają dane w nieułożony sposób
+
+Przypadek 4) Oba procesy piszące zabite
+W tej sytuacji oba procesy czytające się wyłączają
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+3.Polecenie ulimit pozwala na ograniczenie zasobow dla uzytkownika np ulimit -u -10 ogranicza ilosc uruchomionych procesów użytkownika do 10.
+Po ustawieniu takiej wartości i próbie tworzenia kolejnych procesów zawuażono że działanie jest respektowane i nie ma możliwości tworzenia kolejnych.
+Po uruchomieniu fork skryptu ciężko zapanować nad sytuacją i uśmiercić namnażające się procesy. Pomocne w tej sytuacji okazać się może polecenie killall nazwa_polecenia.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+4. Procesy domyślnie mają wartość nice równą 0.
+Aby uruchomić proces z zadaną wartością priorytetu należy wydać polecenie: nice -n [PRIORYTET] nazwa_procesu.
+Aby zmienić priorytet procesu uruchomionego w tle : renice PRIORYTET -p numer_PID
+Czym niższa wartość nice tym program ma wyższy priorytet i zużywa więcej procesora.
+
+1)Ten sam skrypt uruchomiony dwa razy bez zmieniania liczby nice. Zużycie procesora jest równe około 50% dla obu procesów.
+Skrypty zostały uruchomione z poleceniem taskset -c 0 ./skrypt1.sh, aby przydzielić na to zadanie tylko jeden rdzeń.
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                  
+40926 jpietrus  20   0   12704   3172   2964 R  49,5  0,0   0:07.26 skrypt1.sh               
+41081 jpietrus  20   0   12704   3072   2860 R  49,5  0,0   0:04.53 skrypt1.sh
+
+2)Po kolejnym odpaleniu skryptu1.sh na jednym rdzeniu, a następnie zmienieniu liczby nice, poleceniem renice na 10 zużycie procesora na jednym procesie wzrosło do około 90%, a na drugim procesie spadło do około 10%.
+
+PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                  
+51926 jpietrus  20   0   12704   3172   2964 R  89,8  0,0   1:11.48 skrypt1.sh
+24068 jpietrus  20   0  152796   5652   3816 R  82,1  0,0   3:05.80 sshd
+51716 jpietrus  30  10   12704   3072   2860 R   9,6  0,0   0:23.17 skrypt1.sh               
+55488 jpietrus  20   0  152928   5652   3820 S   8,9  0,0   3:02.78 sshd                     
+57160 jpietrus  20   0   40128   5064   3172 R   3,5  0,0   0:00.35 top                      
+24077 jpietrus  20   0   15256   5476   3412 S   0,0  0,0   0:00.08 bash                     
+28546 jpietrus  20   0  152796   5704   3868 S   0,0  0,0   0:00.15 sshd     
